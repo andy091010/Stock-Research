@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="台指期近遠月份價差與轉倉口數監控">
+  <title>ROLL EDGE｜台指轉倉豆腐監測</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="noise"></div>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="ROLL EDGE 首頁">
+      <span class="brand-mark">R/E</span>
+      <span>ROLL EDGE</span>
+    </a>
+    <nav aria-label="主要導覽">
+      <a href="#monitor">監控台</a>
+      <a href="#playbook">風險提醒</a>
+    </nav>
+    <div class="market-state"><i></i><span id="marketState">資料連線中</span></div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">TAIFEX CALENDAR SPREAD INTELLIGENCE</p>
+        <h1>台指轉倉<em>豆腐監測</em></h1>
+        <p class="lede">追蹤近遠月份價差單的轉倉成交口數與價格。</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#monitor">進入即時監控 <span>↘</span></a>
+          <a class="button ghost" href="#playbook">閱讀風險提醒</a>
+        </div>
+      </div>
+      <aside class="signal-card" aria-live="polite">
+        <div class="card-top">
+          <span>策略狀態</span>
+          <span class="mono" id="pairLabel">TX — / —</span>
+        </div>
+        <div class="signal-orbit">
+          <div class="orbit-ring"></div>
+          <div class="signal-core">
+            <span id="signalKicker">LOADING</span>
+            <strong id="signalLabel">讀取中</strong>
+          </div>
+        </div>
+        <p id="signalReason">正在取得當月與次月資料。</p>
+        <div class="signal-meta">
+          <div class="hover-tip" data-tooltip="當月合約結算日讀取中" tabindex="0"><span>結算倒數</span><strong id="daysLeft">—</strong></div>
+          <div class="hover-tip rich-tip zscore-tip" tabindex="0">
+            <span>20日 Z-score</span><strong id="zscore">—</strong>
+            <div class="tooltip-panel zscore-panel" role="tooltip">
+              <p><b>定義：</b>衡量目前價差偏離近 20 個交易日平均值的程度。</p>
+              <p class="tip-calculation"><b>計算：</b>（目前價差 − 近 20 日平均價差）÷ 近 20 日價差標準差。</p>
+              <div class="tip-meaning">
+                <b>實質意義：</b>
+                <ul>
+                  <li><code>Z = 0</code>：價差接近近 20 日平均。</li>
+                  <li><code>Z = +1</code>：價差高於平均約 1 個標準差，開始偏高。</li>
+                  <li><code>Z ≥ +2</code>：價差非常高，可能反映轉倉買盤擁擠。</li>
+                  <li><code>Z = −1</code>：價差明顯偏低，可能較有利於提前 Long Roll。</li>
+                  <li><code>Z ≤ −2</code>：極端偏低，但也可能是除息或市場結構改變。</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="hover-tip rich-tip volume-tip" tabindex="0">
+            <span>口數倍率</span><strong id="volumeRatio">—</strong>
+            <div class="tooltip-panel volume-panel" role="tooltip">
+              <p class="tip-calculation"><b>計算：</b>口數倍率＝今日價差成交口數 ÷ 前 19 個交易日有效口數的中位數</p>
+              <div class="tip-meaning">
+                <b>實質意義：</b>
+                <ul>
+                  <li><code>&lt; 1×</code>：成交較冷清，轉倉需求尚未集中。</li>
+                  <li><code>約 1×</code>：接近日常水準。</li>
+                  <li><code>≥ 1.5×</code>：成交明顯升溫，可能開始進入集中轉倉期。</li>
+                  <li><code>≥ 2×</code>：轉倉交易相當擁擠，但仍須確認價差方向。</li>
+                </ul>
+              </div>
+              <div class="tip-note">
+                <b>備註：</b>
+                <p>口數倍率是「市場參與程度」，不是多空方向。大量成交可能同時包含 Long Roll 與 Short Roll，所以必須搭配價差判斷。</p>
+                <p>價差上升＋口數倍率放大：買遠、賣近需求較強，較符合 ETF 多單集中轉倉。</p>
+                <p>價差下降＋口數倍率放大：空單轉倉或反向力量可能較強。</p>
+                <p>價差上升但口數倍率偏低：可能只是零星成交，訊號可信度較弱。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="thesis">
+      <div class="section-heading thesis-heading">
+        <div>
+          <div class="section-index">01 / THESIS</div>
+          <h2>策略摘要</h2>
+          <p class="thesis-lead">提前買進「近月轉遠月」價差單，等待結算前五個交易日的多單轉倉潮把價差推高，再賣出同一價差單平倉。</p>
+        </div>
+      </div>
+      <div class="thesis-grid">
+        <article><span>01</span><h3>找出被迫方</h3><p>槓桿型 ETF 與長期多單必須延續曝險，轉倉動作是買次月、賣近月。</p></article>
+        <article><span>02</span><h3>避開擁擠期</h3><p>主要流量集中於結算日前五個交易日；理想布局要更早、用限價慢慢等。</p></article>
+        <article><span>03</span><h3>只交易價差</h3><p>使用交易所跨月價差單，同時完成兩隻腳，降低單腿滑價與台指方向曝險。</p></article>
+        <article><span>04</span><h3>賣給急單</h3><p>價差與價差成交口數同步升溫時分批反向平倉，不把「固定流量」誤認為保證獲利。</p></article>
+      </div>
+    </section>
+
+    <section id="monitor" class="monitor">
+      <div class="section-heading">
+        <div><div class="section-index">02 / LIVE MONITOR</div><h2>當月 × 次月監控</h2></div>
+        <div class="refresh-box">
+          <span>日結資料</span><strong id="lastUpdated">—</strong>
+          <button id="refreshButton" type="button">重新整理 ↻</button>
+        </div>
+      </div>
+
+      <div id="dataNotice" class="data-notice">
+        <strong id="dataNoticeTitle">資料來源檢查中</strong>
+        <span id="dataNoticeText">日結資料使用 FinMind；近月盤中價格使用期交所公開行情。</span>
+      </div>
+
+      <div class="metric-strip">
+        <div><span>當月 <b id="nearMonth">—</b></span><strong id="nearPrice">—</strong><small>一般交易時段收盤</small></div>
+        <div><span>次月 <b id="farMonth">—</b></span><strong id="farPrice">—</strong><small>一般交易時段收盤</small></div>
+        <div><span>衍生價差 <b>次月 − 當月</b></span><strong id="derivedSpreadPrice">—</strong><small>依兩月份收盤價計算</small></div>
+        <div class="accent"><span>價差成交 <b>次月 − 當月</b></span><strong id="spreadPrice">—</strong><small id="spreadChange">等待資料</small></div>
+        <div><span>跨月價差成交</span><strong id="spreadVolume">—</strong><small>口 / 日</small></div>
+      </div>
+
+      <div class="quote-guide">
+        <div><strong>衍生價差</strong><span>以遠月收盤價減去近月收盤價計算；兩個收盤價不一定在同一時間成交，因此可能與價差成交不同。</span></div>
+        <div><strong>價差成交</strong><span>期交所跨月價差單當日的實際最後成交價，報價方向為「遠月 − 近月」，兩隻腳同時成交。</span></div>
+      </div>
+
+      <div class="chart-grid">
+        <article class="chart-card wide">
+          <div class="chart-header">
+            <div><span class="chart-kicker">SPREAD PRICE</span><h3>近遠月價差・歷史走勢</h3></div>
+            <div class="legend"><span class="dot lime"></span>價差成交 <span class="dot muted"></span>衍生價差</div>
+          </div>
+          <div class="chart-scroll" id="spreadScroll" aria-label="可水平拖曳的近遠月價差歷史圖">
+            <div class="chart-track" id="spreadTrack"><canvas id="spreadChart" role="img" aria-label="當月次月歷史價差折線圖"></canvas><div class="chart-tooltip" id="spreadTooltip"></div></div>
+          </div>
+        </article>
+
+        <article class="chart-card">
+          <div class="chart-header">
+            <div><span class="chart-kicker">ROLL VOLUME</span><h3>跨月價差口數・歷史紀錄</h3></div>
+            <div class="chart-filter">
+              <label for="volumeContract">合約月份</label>
+              <select id="volumeContract" aria-label="跨月價差口數合約月份"></select>
+            </div>
+          </div>
+          <div class="chart-scroll" id="volumeScroll" aria-label="可水平拖曳的跨月價差口數歷史圖">
+            <div class="chart-track" id="volumeTrack"><canvas id="volumeChart" role="img" aria-label="跨月價差每日成交口數圖"></canvas><div class="chart-tooltip" id="volumeTooltip"></div></div>
+          </div>
+        </article>
+
+        <article class="chart-card">
+          <div class="chart-header">
+            <div><span class="chart-kicker">TAIFEX INTRADAY</span><h3>近月盤中價格・官方取樣</h3></div>
+            <span class="live-pill">30 SEC</span>
+          </div>
+          <div class="intraday-quote"><strong id="liveQuote">—</strong><span id="liveChange">—</span><small id="liveScope">連線中</small></div>
+          <div class="chart-frame compact"><canvas id="liveChart" role="img" aria-label="臺股期貨近月盤中價格圖"></canvas></div>
+        </article>
+      </div>
+
+      <div class="records">
+        <div class="records-title">
+          <div><span class="chart-kicker">RECENT SESSIONS</span><h3>最近交易紀錄</h3></div>
+          <div class="records-filter">
+            <label for="recordsMonth">查詢月份</label>
+            <select id="recordsMonth" aria-label="最近交易紀錄查詢月份"></select>
+            <span>單位：點／口</span>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>日期</th><th>價差成交</th><th>價差口數</th><th>衍生價差</th></tr></thead>
+            <tbody id="recordsBody"><tr><td colspan="4">資料載入中</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="playbook" class="playbook">
+      <div class="section-heading"><div><div class="section-index">03 / RISK NOTICE</div><h2>風險提醒</h2></div></div>
+      <div class="risk-grid">
+        <article><span>風險 01</span><h3>除息不是雜訊</h3><p>遠月會預扣預期除息點數。5–9 月的「合理價差」可能與其他月份完全不同，必須用同季節歷史比較。</p></article>
+        <article><span>風險 02</span><h3>流量不保證方向</h3><p>ETF 規模、空單轉倉、法人現貨替代與假期壓縮都會改變供需；固定時間不代表固定獲利。</p></article>
+        <article><span>風險 03</span><h3>交易成本先扣</h3><p>預期價差利潤必須大於兩次跨月單的手續費、稅費與滑價。掛價未成交也是策略成本。</p></article>
+      </div>
+    </section>
+
+    <section class="sources">
+      <div class="section-index">04 / SOURCES</div>
+      <h2>研究依據</h2>
+      <div class="source-list">
+        <a href="https://www.facebook.com/share/p/1CmmGa2XfR/" target="_blank" rel="noreferrer"><span>01</span><strong>羊叔開講・轉倉文章</strong><small>核心結論與策略脈絡 ↗</small></a>
+        <a href="https://youtu.be/DoYIS__UYog" target="_blank" rel="noreferrer"><span>02</span><strong>跨月價差單・上集</strong><small>制度、報價與轉倉流量 ↗</small></a>
+        <a href="https://youtu.be/Tc0yk-Ie5rk" target="_blank" rel="noreferrer"><span>03</span><strong>跨月價差單・下集</strong><small>法人行為、散戶策略與謎題 ↗</small></a>
+      </div>
+      <p class="disclaimer">本頁為研究與教育用途，不構成投資建議、招攬或獲利保證。期貨具槓桿與流動性風險，執行前請以期交所、期貨商契約規格與自身風險承受度為準。</p>
+    </section>
+  </main>
+
+  <footer><span>ROLL / EDGE © 2026</span><span>DATA WITH BOUNDARIES, TRADES WITH DISCIPLINE.</span></footer>
+  <script src="app.js" defer></script>
+</body>
+</html>
